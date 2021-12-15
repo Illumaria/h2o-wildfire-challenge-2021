@@ -11,7 +11,8 @@ The solution is expected to mostly help the local authorities to prepare for pos
 The training process can be reconstructed in two steps:
 1. First, collect the training data. We used [FIRMS](https://firms.modaps.eosdis.nasa.gov/download/) (NASA temperature anomaly data). See `notebooks/collect_data.ipynb` for details.
 2. Train models on that data. See `notebooks/train.ipynb` for details.
-3. Place both models in `models` folder to use them in the application. We provide pretrained models so that the application is ready to use.
+
+Place both models in `models` folder to use them in the application. We provide pretrained models so that the application is ready to use.
 
 ## Usage
 
