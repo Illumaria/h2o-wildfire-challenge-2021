@@ -69,7 +69,10 @@ def update_output(n_clicks, lat, lon):
     tmpfile = io.BytesIO()
     force_plot_mpl.savefig(tmpfile, format="png")
     encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
-    shap_html = html.Img(src=f"data:image/png;base64, {encoded}")
+    shap_html = html.Div([
+        html.H2(f"probability: {probability[0] * 100:.3f}"),
+        html.Img(src=f"data:image/png;base64, {encoded}", style={"width": "70%"})
+    ])
     return [shap_html]
 
 
@@ -142,7 +145,7 @@ if __name__ == "__main__":
                         )
                     ]),
                     html.Button("Submit", id="submit-val", n_clicks=0),
-                    html.Div(id="container-button-basic", style={"width: 100%"})
+                    html.Div(id="container-button-basic", style={"width": "100%"})
                 ]
             ),
         ]
