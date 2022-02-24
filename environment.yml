@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - catboost=1.0.3
+  - catboost.cbm=1.0.3
   - fiona=1.8.20
   - flask=2.0.2
   - geopandas=0.10.2
