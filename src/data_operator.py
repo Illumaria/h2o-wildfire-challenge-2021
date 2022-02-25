@@ -1,4 +1,5 @@
 import pickle
+from typing import Any, Callable, Optional, Tuple
 
 import fiona
 import geopandas as gpd
@@ -9,34 +10,40 @@ import shap
 from shapely.geometry import Point
 from shapely.ops import transform
 
-from .constants import (AGG_FEATURES, DATA_LINKS, DISTANCES, FEATURES,
-                        MODEL_PATH, PROBABILITY_THRESHOLD)
+from src.constants import (
+    AGG_FEATURES,
+    DATA_LINKS,
+    DISTANCES,
+    FEATURES,
+    MODEL_PATH,
+    PROBABILITY_THRESHOLD,
+)
 
 
 class DataOperator:
-    def __init__(self) -> None:
+    data: gpd.GeoDataFrame
+    explainer: shap.explainers.Tree
 
-        self.data = None
-        self.explainer = None
+    def __init__(self) -> None:
         self.model = self.load_model()
         self.update_data()
         self.transform = self.get_transform()
 
     @staticmethod
-    def load_model():
+    def load_model() -> Any:
         with open(MODEL_PATH, "rb") as f:
             model = pickle.load(f)
         return model
 
     @staticmethod
-    def get_transform():
-        wgs84 = pyproj.CRS('EPSG:4326')
-        utm = pyproj.CRS('EPSG:3310')
+    def get_transform() -> Callable[..., Tuple[Any, ...]]:
+        wgs84 = pyproj.CRS("EPSG:4326")
+        utm = pyproj.CRS("EPSG:3310")
 
         return pyproj.Transformer.from_crs(wgs84, utm, always_xy=True).transform
 
-    def load_data(self):
-        gpd_data = None
+    def load_data(self) -> None:
+        gpd_data: Optional[gpd.GeoDataFrame] = None
         for link in DATA_LINKS:
             response = requests.get(link)
             if response.status_code == 200:
@@ -48,19 +55,19 @@ class DataOperator:
                             gpd.GeoDataFrame.from_features(b),
                         )
         gpd_data.rename(
-            columns={'BRIGHT_TI4': 'BRIGHTNESS', 'BRIGHT_TI5': 'BRIGHT_T31'},
+            columns={"BRIGHT_TI4": "BRIGHTNESS", "BRIGHT_TI5": "BRIGHT_T31"},
             inplace=True,
         )
         gpd_data["CONFIDENCE_NAME"] = gpd_data["CONFIDENCE"]
         gpd_data["CONFIDENCE"] = gpd_data["CONFIDENCE"].map(
-            {'l': 0, 'h': 1, 'n': 3, 'high': 1, 'nominal': 3, 'low': 0}
+            {"l": 0, "h": 1, "n": 3, "high": 1, "nominal": 3, "low": 0}
         )
         gpd_data.crs = "epsg:4326"
         gpd_data.to_crs(epsg=3310, inplace=True)
         self.data = gpd_data
         self.data.reset_index(drop=True, inplace=True)
 
-    def get_preds(self):
+    def get_preds(self) -> None:
         gpd_data_initial = self.data.copy()
         for col in AGG_FEATURES:
             for agg in ["mean", "max", "min", "std"]:
@@ -78,11 +85,11 @@ class DataOperator:
         self.data = self.data.loc[self.data["probability"] >= PROBABILITY_THRESHOLD, :]
         self.explainer = shap.TreeExplainer(self.model, gpd_data_initial[FEATURES])
 
-    def update_data(self):
+    def update_data(self) -> None:
         self.load_data()
         self.get_preds()
 
-    def get_agg(self, point, distance):
+    def get_agg(self, point: Point, distance: float) -> pd.DataFrame:
         indexes = self.data["geometry"].sindex.query(point.buffer(distance * 1000))
         subdata = self.data.iloc[indexes][AGG_FEATURES].agg(
             ["mean", "std", "max", "min"]
@@ -95,18 +102,18 @@ class DataOperator:
         subdata[f"{distance}.dist"] = dist / count
         return subdata
 
-    def predict_point(self, lon, lat):
+    def predict_point(self, lon: float, lat: float) -> Tuple[float, Any]:
         x = Point(lon, lat)
         x = transform(self.transform, x)
-        seriesis = []
+        series = []
         for dist in DISTANCES:
-            seriesis.append(self.get_agg(x, dist))
-        seriesis = pd.concat(seriesis, axis=1)
+            series.append(self.get_agg(x, dist))
+        series_df = pd.concat(series, axis=1)
         dists = self.data["geometry"].apply(lambda p: p.distance(x))
         index = dists.idxmin()
-        seriesis["closest.dist"] = dists.loc[index]
+        series_df["closest.dist"] = dists.loc[index]
         for col in AGG_FEATURES:
-            seriesis[f"closest.{col}"] = self.data[col].loc[index]
-        probability = self.model.predict_proba(seriesis[FEATURES].fillna(0))[:, 1]
-        shap_values = self.explainer.shap_values(seriesis)
+            series_df[f"closest.{col}"] = self.data[col].loc[index]
+        probability = self.model.predict_proba(series_df[FEATURES].fillna(0))[:, 1]
+        shap_values = self.explainer.shap_values(series_df)
         return probability, shap_values

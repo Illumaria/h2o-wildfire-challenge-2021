@@ -1,16 +1,17 @@
 import base64
 import io
 from datetime import datetime
+from typing import List, Union
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
 import plotly.express as px
 import shap
+from dash import dcc, html
 from dash.dependencies import Input, Output, State
+from plotly.graph_objects import Figure
 from shap.plots._force_matplotlib import draw_additive_plot
 
-from src.constants import AGG_FEATURES, MAPBOX_TOKEN, FEATURES
+from src.constants import AGG_FEATURES, FEATURES, MAPBOX_TOKEN
 from src.data_operator import DataOperator
 
 app = dash.Dash(__name__)
@@ -18,14 +19,14 @@ data_operator = DataOperator()
 LAST_UPDATE = datetime.now().date()
 
 
-def update_data():
+def update_data() -> None:
     now = datetime.now()
     if now.date() > LAST_UPDATE and now.hour > 3:
         data_operator.update_data()
 
 
 @app.callback(Output("fire-map", "figure"), Input("proba_threshold", "value"))
-def filter_by_proba(value):
+def filter_by_proba(value: float) -> Figure:
     update_data()
     filtered_df = data_operator.data[
         data_operator.data["probability"] >= round(value / 100, 2)
@@ -55,7 +56,7 @@ def filter_by_proba(value):
     [Input("submit-val", "n_clicks")],
     [State("input-lat", "value"), State("input-lon", "value")],
 )
-def update_output(n_clicks, lat, lon):
+def update_output(n_clicks: int, lat: float, lon: float) -> List[Union[str, html.Div]]:
     update_data()
     if lat is None or lon is None:
         return ["Input lat and lon and press submit"]
@@ -64,10 +65,9 @@ def update_output(n_clicks, lat, lon):
         data_operator.explainer.expected_value,
         shap_value[0],
         matplotlib=False,
-        features=FEATURES
+        features=FEATURES,
     )
     force_plot_mpl = draw_additive_plot(force_plot.data, (20, 7), show=False)
-    print(type(force_plot_mpl))
     tmpfile = io.BytesIO()
     force_plot_mpl.savefig(tmpfile, format="png")
     encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
@@ -136,7 +136,6 @@ if __name__ == "__main__":
                                 type="text",
                                 placeholder="input latitude",
                             ),
-
                         ]),
                         html.Div([
                             html.Label(
