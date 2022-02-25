@@ -42,7 +42,7 @@ docker build -t h2o-wildfire .
 docker run --rm -p 4400:4400 h2o-wildfire
 ```
 
-Now go to the `https://localhost:4400/map`! :)
+Now go to the `https://localhost:4400/`! :)
 It is possible to set threshold for model confidence (see the vertical slider on the right side of the page) to filter points, or to get predictions _and_ their explanations (we used Shapley values) for the exact location by providing its latitude and longitude. 
 
 ## Team members
