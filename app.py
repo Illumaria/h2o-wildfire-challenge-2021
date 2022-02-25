@@ -56,6 +56,7 @@ def filter_by_proba(value):
     [State("input-lat", "value"), State("input-lon", "value")],
 )
 def update_output(n_clicks, lat, lon):
+    update_data()
     if lat is None or lon is None:
         return ["Input lat and lon and press submit"]
     probability, shap_value = data_operator.predict_point(float(lon), float(lat))
@@ -65,13 +66,14 @@ def update_output(n_clicks, lat, lon):
         matplotlib=False,
         features=FEATURES
     )
-    force_plot_mpl = draw_additive_plot(force_plot.data, (30, 7), show=False)
+    force_plot_mpl = draw_additive_plot(force_plot.data, (20, 7), show=False)
+    print(type(force_plot_mpl))
     tmpfile = io.BytesIO()
     force_plot_mpl.savefig(tmpfile, format="png")
     encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
     shap_html = html.Div([
-        html.H2(f"probability: {probability[0] * 100:.3f}"),
-        html.Img(src=f"data:image/png;base64, {encoded}", style={"width": "70%"})
+        html.H3(f"probability: {probability[0] * 100:.3f}", style={"text-align": "center"}),
+        html.Img(src=f"data:image/png;base64, {encoded}", style={"width": "100%"})
     ])
     return [shap_html]
 
@@ -87,7 +89,7 @@ if __name__ == "__main__":
                     dcc.Graph(
                         id="fire-map",
                         style={
-                            "width": "95%",
+                            "width": "90%",
                             "height": "100%",
                             "display": "inline-block",
                             "position": "relative",
@@ -110,10 +112,12 @@ if __name__ == "__main__":
                             )
                         ],
                         style={
-                            "height": "100%",
+                            "height": "80%",
                             "width": "3%",
                             "display": "inline-block",
                             "position": "relative",
+                            "vertical-align": "top",
+                            "marginTop": "50px"
                         },
                     ),
                 ],
@@ -122,31 +126,36 @@ if __name__ == "__main__":
             html.Div(
                 [
                     html.Div([
-                        html.Label(
-                            "latitude",
-                            style={"marginRight": "10px", "width": "5%"},
-                        ),
-                        dcc.Input(
-                            id="input-lat",
-                            type="text",
-                            placeholder="input latitude",
-                        ),
+                        html.Div([
+                            html.Label(
+                                "latitude",
+                                style={"marginRight": "10px", "width": "5%"},
+                            ),
+                            dcc.Input(
+                                id="input-lat",
+                                type="text",
+                                placeholder="input latitude",
+                            ),
 
-                    ]),
-                    html.Div([
-                        html.Label(
-                            "longitude",
-                            style={"marginRight": "10px", "width": "5%"},
-                        ),
-                        dcc.Input(
-                            id="input-lon",
-                            type="text",
-                            placeholder="input longitude"
-                        )
-                    ]),
-                    html.Button("Submit", id="submit-val", n_clicks=0),
-                    html.Div(id="container-button-basic", style={"width": "100%"})
-                ]
+                        ]),
+                        html.Div([
+                            html.Label(
+                                "longitude",
+                                style={"marginRight": "10px", "width": "5%"},
+                            ),
+                            dcc.Input(
+                                id="input-lon",
+                                type="text",
+                                placeholder="input longitude"
+                            )
+                        ]),
+                        html.Button("Submit", id="submit-val", n_clicks=0),
+                    ], style={"width": "15%", "position": "static"}),
+                    html.Div(
+                        id="container-button-basic",
+                        style={"width": "70%", "position": "static"}
+                    )
+                ], style={"display": "flex"}
             ),
         ]
     )
