@@ -71,10 +71,15 @@ def update_output(n_clicks: int, lat: float, lon: float) -> List[Union[str, html
     tmpfile = io.BytesIO()
     force_plot_mpl.savefig(tmpfile, format="png")
     encoded = base64.b64encode(tmpfile.getvalue()).decode("utf-8")
-    shap_html = html.Div([
-        html.H3(f"probability: {probability[0] * 100:.3f}", style={"text-align": "center"}),
-        html.Img(src=f"data:image/png;base64, {encoded}", style={"width": "100%"})
-    ])
+    shap_html = html.Div(
+        [
+            html.H3(
+                f"probability: {probability[0] * 100:.3f}",
+                style={"text-align": "center"},
+            ),
+            html.Img(src=f"data:image/png;base64, {encoded}", style={"width": "100%"}),
+        ]
+    )
     return [shap_html]
 
 
@@ -117,7 +122,7 @@ if __name__ == "__main__":
                             "display": "inline-block",
                             "position": "relative",
                             "vertical-align": "top",
-                            "marginTop": "50px"
+                            "marginTop": "50px",
                         },
                     ),
                 ],
@@ -125,36 +130,44 @@ if __name__ == "__main__":
             ),
             html.Div(
                 [
-                    html.Div([
-                        html.Div([
-                            html.Label(
-                                "latitude",
-                                style={"marginRight": "10px", "width": "5%"},
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.Label(
+                                        "latitude",
+                                        style={"marginRight": "10px", "width": "5%"},
+                                    ),
+                                    dcc.Input(
+                                        id="input-lat",
+                                        type="text",
+                                        placeholder="input latitude",
+                                    ),
+                                ]
                             ),
-                            dcc.Input(
-                                id="input-lat",
-                                type="text",
-                                placeholder="input latitude",
+                            html.Div(
+                                [
+                                    html.Label(
+                                        "longitude",
+                                        style={"marginRight": "10px", "width": "5%"},
+                                    ),
+                                    dcc.Input(
+                                        id="input-lon",
+                                        type="text",
+                                        placeholder="input longitude",
+                                    ),
+                                ]
                             ),
-                        ]),
-                        html.Div([
-                            html.Label(
-                                "longitude",
-                                style={"marginRight": "10px", "width": "5%"},
-                            ),
-                            dcc.Input(
-                                id="input-lon",
-                                type="text",
-                                placeholder="input longitude"
-                            )
-                        ]),
-                        html.Button("Submit", id="submit-val", n_clicks=0),
-                    ], style={"width": "15%", "position": "static"}),
+                            html.Button("Submit", id="submit-val", n_clicks=0),
+                        ],
+                        style={"width": "15%", "position": "static"},
+                    ),
                     html.Div(
                         id="container-button-basic",
-                        style={"width": "70%", "position": "static"}
-                    )
-                ], style={"display": "flex"}
+                        style={"width": "70%", "position": "static"},
+                    ),
+                ],
+                style={"display": "flex"},
             ),
         ]
     )
