@@ -21,14 +21,14 @@ With conda environment:
 ```bash
 conda env create -f environment.yml
 conda activate h2o-wildfire
-python app_flask.py
+python app.py
 ```
 
 With local environment and pip:
 
 ```bash
 pip install -r requirements.txt
-python app_flask.py
+python app.py
 ```
 
 With Docker:
